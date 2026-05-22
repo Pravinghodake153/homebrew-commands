@@ -1,63 +1,35 @@
 class EchoAi < Formula
-  desc "Invisible AI assistant for macOS — 6 providers, 15 slash commands"
+  desc "Invisible AI assistant for macOS (Cloud Edition)"
   homepage "https://github.com/Pravinghodake153/echo"
-  url "https://github.com/Pravinghodake153/echo/releases/download/v1.0.2/Echo-v1.0.2.tar.gz"
-  sha256 "cdc0b5cc97b3efcf4ff8a2a5848af3845bcb539c747f8971f741885b0bd0c958"
-  version "1.0.2"
+  url "https://github.com/Pravinghodake153/echo/releases/download/v1.0.4/Echo-App-v1.0.4.tar.gz"
+  sha256 "942562623d2fb3a46b043e5cd7e63f303108f7a1757d61cd3b79479346431f79"
+  version "1.0.4"
   license "MIT"
 
   depends_on :macos
-  depends_on "python@3.13" => :recommended
 
   def install
-    # Install everything to the Cellar prefix
-    prefix.install Dir["*"]
-
-    # Create config.json from default template if missing
-    config_dir = prefix/"backend/config"
-    config_file = config_dir/"config.json"
-    default_config = config_dir/"config.default.json"
-    if !config_file.exist? && default_config.exist?
-      cp default_config, config_file
-    end
+    # Install the Echo.app to the prefix (No Python or backend needed!)
+    prefix.install "Echo.app"
   end
 
   def post_install
-    # Setup Python virtual environment
-    venv_dir = prefix/"backend/venv"
-    unless (venv_dir/"bin/python").exist?
-      system "python3", "-m", "venv", venv_dir.to_s
-    end
-
-    # Install Python dependencies
-    system venv_dir/"bin/pip", "install", "--quiet", "--upgrade", "pip"
-    system venv_dir/"bin/pip", "install", "--quiet", "-r", (prefix/"requirements.txt").to_s
-
     # Clear macOS quarantine flag
     system "xattr", "-cr", (prefix/"Echo.app").to_s
 
-    # Create .env template if missing
-    env_file = prefix/".env"
-    unless env_file.exist?
-      env_file.write <<~EOS
-        # Echo AI — Configuration
-        # Add your API keys below. At least one is required.
-
-        # Gemini API (recommended) — Get key at: https://aistudio.google.com/apikey
-        GEMINI_API_KEYS=
-
-        # OpenRouter (optional) — Get key at: https://openrouter.ai/settings/keys
-        OPENROUTER_API_KEY=
-
-        # Models
-        GEMINI_MODEL_ID=gemini-2.5-flash
-        OPENROUTER_MODEL_ID=openai/gpt-4o
-        OLLAMA_MODEL=qwen3:4b
-      EOS
+    # Create config.json to connect to the remote Hugging Face backend seamlessly
+    config_dir = Pathname.new(ENV["HOME"])/".echo"
+    config_dir.mkpath
+    
+    config_file = config_dir/"config.json"
+    unless config_file.exist?
+      config_file.write <<~EOF
+      {
+          "backend_url": "https://ghodakepravin153-echo.hf.space",
+          "auth_token": "42ce76c05d6fea6fc82caf112140ece6a677a83fc3a6296f01df12acdd562848"
+      }
+      EOF
     end
-
-    # Create symlink so you can launch from anywhere
-    bin.install_symlink prefix/"Echo.app/Contents/MacOS/Echo" => "echo-ai"
   end
 
   def caveats
@@ -66,17 +38,15 @@ class EchoAi < Formula
       ║           Echo AI installed successfully!         ║
       ╚═══════════════════════════════════════════════════╝
 
+      Echo is now connected to your remote Hugging Face backend!
+      Zero setup required — no Python, no API keys needed on this Mac.
+
       Launch Echo:
         open #{prefix}/Echo.app
 
-      Or from terminal:
-        echo-ai
-
       First time setup:
         1. Grant Accessibility permission when prompted
-        2. Add your API key:
-           → Open Settings in Echo's menu bar
-           → Or edit: #{prefix}/.env
+        2. Grant Screen Recording permission when prompted
 
       Uninstall:
         brew uninstall echo-ai
@@ -85,6 +55,5 @@ class EchoAi < Formula
 
   test do
     assert_predicate prefix/"Echo.app/Contents/MacOS/Echo", :exist?
-    assert_predicate prefix/"backend/app.py", :exist?
   end
 end
