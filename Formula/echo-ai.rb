@@ -1,7 +1,7 @@
 class EchoAi < Formula
   desc "Invisible AI assistant for macOS (Cloud Edition)"
   homepage "https://github.com/Pravinghodake153/echo"
-  url "https://github.com/Pravinghodake153/echo/releases/download/v1.0.4/Echo-App-v1.0.4.tar.gz"
+  url "https://raw.githubusercontent.com/Pravinghodake153/echo/main/Echo-App-v1.0.4.tar.gz"
   sha256 "942562623d2fb3a46b043e5cd7e63f303108f7a1757d61cd3b79479346431f79"
   version "1.0.4"
   license "MIT"
